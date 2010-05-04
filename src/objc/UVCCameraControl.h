@@ -10,6 +10,28 @@
 #define UVC_INPUT_TERMINAL_ID 0x01
 #define UVC_PROCESSING_UNIT_ID 0x02
 
+// for Logitech LXU
+#define UVC_LOGITECH_MOTOR 0x9
+
+
+//TODO: use guid instead of unit id
+//#define UVC_GUID_INPUT_TERMINAL_ID {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}
+//#define UVC_GUID_PROCESSING_UNIT_ID {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}
+//#define UVC_GUID_LOGITECH_MOTOR {0x82, 0x06, 0x61, 0x63, 0x70, 0x50, 0xab, 0x49, \
+0xb8, 0xcc, 0xb3, 0x85, 0x5e, 0x8d, 0x22, 0x56}
+
+
+#define LXU_MOTOR_PANTILT_RELATIVE_CONTROL              0x01
+#define LXU_MOTOR_PANTILT_RESET_CONTROL                 0x02
+#define LXU_MOTOR_FOCUS_MOTOR_CONTROL                   0x03
+
+#define XU_HW_CONTROL_LED1               1
+#define XU_MOTORCONTROL_PANTILT_RELATIVE 1
+#define XU_MOTORCONTROL_PANTILT_RESET    2
+#define XU_MOTORCONTROL_FOCUS            3
+
 #define UVC_CONTROL_INTERFACE_CLASS 14
 #define UVC_CONTROL_INTERFACE_SUBCLASS 1
 	
@@ -31,6 +53,9 @@ typedef struct {
 typedef struct {
 	uvc_control_info_t autoExposure;
 	uvc_control_info_t exposure;
+	uvc_control_info_t autoFocus;
+	uvc_control_info_t pantiltrel;
+	uvc_control_info_t pantilt_reset;
 	uvc_control_info_t brightness;
 	uvc_control_info_t contrast;
 	uvc_control_info_t gain;
@@ -53,6 +78,8 @@ typedef struct {
 
 - (BOOL)sendControlRequest:(IOUSBDevRequest)controlRequest;
 - (BOOL)setData:(long)value withLength:(int)length forSelector:(int)selector at:(int)unitID;
+- (BOOL)setData2:(void *)value withLength:(int)length forSelector:(int)selector at:(int)unitID;
+
 - (long)getDataFor:(int)type withLength:(int)length fromSelector:(int)selector at:(int)unitID;
 
 - (uvc_range_t)getRangeForControl:(const uvc_control_info_t *)control;
@@ -60,10 +87,13 @@ typedef struct {
 - (float)getValueForControl:(const uvc_control_info_t *)control;
 - (BOOL)setValue:(float)value forControl:(const uvc_control_info_t *)control;
 
-
 - (BOOL)setAutoExposure:(BOOL)enabled;
+- (BOOL)setPanTilt:(BOOL)reset withPan:(int)pan withTilt:(int)tilt;
+- (BOOL)resetTiltPan:(BOOL)enabled;
 - (BOOL)getAutoExposure;
 - (BOOL)setExposure:(float)value;
+- (BOOL)setZoom:(float)value;
+- (float)getZoom;
 - (float)getExposure;
 - (BOOL)setGain:(float)value;
 - (float)getGain;

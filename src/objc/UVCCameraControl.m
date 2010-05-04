@@ -12,6 +12,21 @@ const uvc_controls_t uvc_controls = {
 		.selector = 0x04,
 		.size = 4,
 	},
+	.autoFocus = {
+		.unit = UVC_INPUT_TERMINAL_ID,
+		.selector = 0x08,
+		.size = 1,
+	},
+	.pantiltrel = {
+		.unit = UVC_LOGITECH_MOTOR,
+		.selector = LXU_MOTOR_PANTILT_RELATIVE_CONTROL,
+		.size = 4,
+	},
+	.pantilt_reset = {
+		.unit = UVC_LOGITECH_MOTOR,
+		.selector = LXU_MOTOR_PANTILT_RESET_CONTROL,
+		.size = 1,
+	},
 	.brightness = {
 		.unit = UVC_PROCESSING_UNIT_ID,
 		.selector = 0x02,
@@ -226,6 +241,11 @@ const uvc_controls_t uvc_controls = {
 
 - (BOOL)setData:(long)value withLength:(int)length forSelector:(int)selector at:(int)unitId {
 	IOUSBDevRequest controlRequest;
+#ifdef DEBUG_UVC_CAMERA
+	NSLog(@"setData unitid %d",unitId);
+	NSLog(@"setData selector %d",selector);
+	NSLog(@"setData length %d",length);
+#endif
 	controlRequest.bmRequestType = USBmakebmRequestType( kUSBOut, kUSBClass, kUSBInterface );
 	controlRequest.bRequest = UVC_SET_CUR;
 	controlRequest.wValue = (selector << 8) | 0x00;
@@ -236,6 +256,27 @@ const uvc_controls_t uvc_controls = {
 	return [self sendControlRequest:controlRequest];
 }
 
+/* 
+  support pointer value of setData
+ */
+
+- (BOOL)setData2:(void *)value withLength:(int)length forSelector:(int)selector at:(int)unitId
+{
+	IOUSBDevRequest controlRequest;
+#ifdef DEBUG_UVC_CAMERA
+	NSLog(@"setData2 unitid %d",unitId);
+	NSLog(@"setData2 selector %d",selector);
+	NSLog(@"setData2 length %d",length);
+#endif
+	controlRequest.bmRequestType = USBmakebmRequestType( kUSBOut, kUSBClass, kUSBInterface );
+	controlRequest.bRequest = UVC_SET_CUR;
+	controlRequest.wValue = ( selector << 8) | 0x00;
+	controlRequest.wIndex = ( unitId <<8 ) | 0x00; 
+	controlRequest.wLength = length;
+	controlRequest.wLenDone = 0;
+	controlRequest.pData = value;
+	return [self sendControlRequest:controlRequest];
+}
 
 - (long)getDataFor:(int)type withLength:(int)length fromSelector:(int)selector at:(int)unitId {
 	long value = 0;
@@ -257,6 +298,9 @@ const uvc_controls_t uvc_controls = {
 	uvc_range_t range = { 0, 0 };
 	range.min = [self getDataFor:UVC_GET_MIN withLength:control->size fromSelector:control->selector at:control->unit];
 	range.max = [self getDataFor:UVC_GET_MAX withLength:control->size fromSelector:control->selector at:control->unit];
+#ifdef DEBUG_UVC_CAMERA
+	NSLog(@"getRangeForControl min:%d max:%d",range.min,range.max);
+#endif
 	return range;
 }
 
@@ -311,10 +355,54 @@ const uvc_controls_t uvc_controls = {
 	
 	return ( intval == 0x08 ? YES : NO );
 }
+// TODO: support AutoFocus
+//   Logitech Orbit dont support AutoFocus
+
+- (BOOL)setAutoFocus:(BOOL)enabled {
+	int intval = (enabled ? 0x01 : 0x00); // "auto exposure modes" ar NOT boolean (on|off) as it seems
+	int retval = [self getDataFor:UVC_GET_CUR 
+					   withLength:uvc_controls.autoFocus.size 
+					 fromSelector:uvc_controls.autoFocus.selector 
+							   at:uvc_controls.autoFocus.unit];
+#ifdef DEBUG_UVC_CAMERA
+	NSLog(@" getFocus %d ",retval);
+    //test resetPanTilt
+    int i,ret;
+	//for(i=5;i<100;i++){
+		ret = [self setData:1
+			withLength:1
+		   forSelector:2
+					at:9];
+		NSLog(@"%d: %d",9,ret);
+		//sleep(5);
+	//}
+#endif	
+	return [self setData:intval 
+			  withLength:uvc_controls.autoFocus.size 
+			 forSelector:uvc_controls.autoFocus.selector 
+					  at:uvc_controls.autoFocus.unit];
+}
 
 - (BOOL)setExposure:(float)value {
 	value = 1 - value;
 	return [self setValue:value forControl:&uvc_controls.exposure];
+}
+
+// FIXME: Logitech Qcam dont support setZoom
+
+- (BOOL)setZoom:(float)value {
+
+#ifdef DEBUG_UVC_CAMERA
+	int hoge = 4;
+	float fl=0;
+	
+	NSLog(@" setZoom %f",value);
+	long intval = [self getValueForControl:&uvc_controls.pantiltrel];
+	NSLog(@"get getZoom %ld",intval);
+#endif
+
+	return 0;
+
 }
 
 - (float)getExposure {
@@ -368,6 +456,40 @@ const uvc_controls_t uvc_controls = {
 			  withLength:uvc_controls.autoWhiteBalance.size 
 			 forSelector:uvc_controls.autoWhiteBalance.selector 
 					  at:uvc_controls.autoWhiteBalance.unit];
+}
+// resetTiltPan support only logitech Orbit.
+
+- (BOOL)resetTiltPan:(BOOL)enabled {
+
+	return [self setData:3
+			 withLength:uvc_controls.pantilt_reset.size
+			forSelector:uvc_controls.pantilt_reset.selector 
+					 at:uvc_controls.pantilt_reset.unit];
+ }
+
+// resetTiltPan support only logitech Orbit.
+- (BOOL)setPanTilt:(BOOL)reset withPan:(int)pan withTilt:(int)tilt {
+	
+	int16_t value[2];
+	BOOL ret;
+	
+	value[0] = tilt*100;
+	value[1] = pan*100;
+	
+#ifdef DEBUG_UVC_CAMERA	
+	NSLog(@"setPanTilt pan %d tilt %d",value[0],value[1]);
+#endif	
+	
+	ret = [self setData2:(void *)value
+			  withLength:uvc_controls.pantiltrel.size
+			 forSelector:uvc_controls.pantiltrel.selector 
+					  at:uvc_controls.pantiltrel.unit];
+	if(ret){
+		NSLog(@"setPanTilt: success");
+	}else{
+		NSLog(@"setPanTilt: fail");
+	}
+	return ret;
 }
 
 - (BOOL)getAutoWhiteBalance {

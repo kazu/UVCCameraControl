@@ -511,3 +511,5 @@ const uvc_controls_t uvc_controls = {
 
 
 @end
+
+void Init_uvccameracontrol(){}

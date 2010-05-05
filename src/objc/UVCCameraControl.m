@@ -94,9 +94,9 @@ const uvc_controls_t uvc_controls = {
 		}
 		UInt8 currentDeviceClass;
 		(*deviceInterface)->GetDeviceClass(deviceInterface, &currentDeviceClass);
-		if(currentDeviceClass != UVC_CONTROL_INTERFACE_CLASS){
-			printf("class %ud UVC %ud \n",currentDeviceClass,UVC_CONTROL_INTERFACE_CLASS);
-			//continue;
+		if(currentDeviceClass != kUSBMiscellaneousClass){
+			//printf("class 0x%x UVC 0x%x \n",currentDeviceClass,kUSBMiscellaneousClass);
+			continue;
 		}
 		
 		UInt32 currentLocationID = 0;

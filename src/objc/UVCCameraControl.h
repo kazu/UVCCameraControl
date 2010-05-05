@@ -111,5 +111,6 @@ typedef struct {
 - (BOOL)getAutoWhiteBalance;
 - (BOOL)setWhiteBalance:(float)value;
 - (float)getWhiteBalance;
+- (BOOL)listOfUVCdevice:(UInt32)deviceclass;
 
 @end

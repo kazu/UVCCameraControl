@@ -68,6 +68,56 @@ const uvc_controls_t uvc_controls = {
 @implementation UVCCameraControl
 
 
+- (BOOL)listOfUVCdevice:(UInt32)deviceclass {
+	// Find All USB Devices, get their locationId and check if it matches the requested one
+	CFMutableDictionaryRef matchingDict = IOServiceMatching(kIOUSBDeviceClassName);
+	io_iterator_t serviceIterator;
+	IOServiceGetMatchingServices( kIOMasterPortDefault, matchingDict, &serviceIterator );
+	
+	io_service_t camera;
+	while( camera = IOIteratorNext(serviceIterator) ) {
+		// Get DeviceInterface
+		IOUSBDeviceInterface **deviceInterface = NULL;
+		IOCFPlugInInterface	**plugInInterface = NULL;
+		SInt32 score;
+		kern_return_t kr = IOCreatePlugInInterfaceForService( camera, kIOUSBDeviceUserClientTypeID, kIOCFPlugInInterfaceID, &plugInInterface, &score );
+		if( (kIOReturnSuccess != kr) || !plugInInterface ) {
+			NSLog( @"CameraControl Error: IOCreatePlugInInterfaceForService returned 0x%08x.", kr );
+			continue;
+		}
+		
+		HRESULT res = (*plugInInterface)->QueryInterface(plugInInterface, CFUUIDGetUUIDBytes(kIOUSBDeviceInterfaceID), (LPVOID*) &deviceInterface );
+		(*plugInInterface)->Release(plugInInterface);
+		if( res || deviceInterface == NULL ) {
+			NSLog( @"CameraControl Error: QueryInterface returned %d.\n", (int)res );
+			continue;
+		}
+		UInt8 currentDeviceClass;
+		(*deviceInterface)->GetDeviceClass(deviceInterface, &currentDeviceClass);
+		if(currentDeviceClass != UVC_CONTROL_INTERFACE_CLASS){
+			NSLog(@"class %ud UVC %ud ",currentDeviceClass,UVC_CONTROL_INTERFACE_CLASS);
+			continue;
+		}
+		
+		UInt32 currentLocationID = 0;
+		(*deviceInterface)->GetLocationID(deviceInterface, &currentLocationID);
+		
+		UInt16 currentVendor = 0;
+		(*deviceInterface)->GetDeviceVendor(deviceInterface, &currentVendor);
+		
+		UInt16 currentProduct = 0;
+		(*deviceInterface)->GetDeviceProduct(deviceInterface, &currentProduct);
+		
+		
+		printf("LocationID: 0x%x VendorID: 0x%x ProductID: 0x%x",
+              currentLocationID,
+              currentVendor,
+              currentProduct);
+		
+	} // end while
+	return TRUE;
+
+}
 - (id)initWithLocationID:(UInt32)locationID {
 	if( self = [super init] ) {
 		interface = NULL;
@@ -99,14 +149,14 @@ const uvc_controls_t uvc_controls = {
 			UInt32 currentLocationID = 0;
 			(*deviceInterface)->GetLocationID(deviceInterface, &currentLocationID);
 		 
-      UInt16 currentVendor = 0;
+			UInt16 currentVendor = 0;
 			(*deviceInterface)->GetDeviceVendor(deviceInterface, &currentVendor);
 
-      UInt16 currentProduct = 0;
+			UInt16 currentProduct = 0;
 			(*deviceInterface)->GetDeviceProduct(deviceInterface, &currentProduct);
 
 
-      NSLog(@"LocationID: 0x%x VendorID: 0x%x ProductID: 0x%x",
+			NSLog(@"LocationID: 0x%x VendorID: 0x%x ProductID: 0x%x",
               currentLocationID,
               currentVendor,
               currentProduct);

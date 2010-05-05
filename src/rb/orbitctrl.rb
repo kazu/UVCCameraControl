@@ -4,6 +4,8 @@ require "osx/cocoa"
 require "uvccameracontrol"
 
 class OrbitControl
+  attr_accessor :location
+
   def initialize(vendor_id = 0x046d,product_id = 0x0994)
     @vendor = vendor_id
     @product = product_id
@@ -54,6 +56,18 @@ class OrbitControl
 
   private 
   def open_control
+    if @location
+      open_control_location
+    else
+      open_control_vendor
+    end
+  end
+
+  def open_control_location
+    @camera_control = OSX::UVCCameraControl.alloc.initWithLocationID(@location)
+  end
+
+  def open_control_vendor
   #  @camera_control = OSX::UVCCameraControl.alloc.initWithVendorID_productID(
   #    @vendor.to_i,0x0994)
     @camera_control = OSX::UVCCameraControl.alloc.initWithVendorID_productID(
@@ -69,5 +83,8 @@ end
 
 if __FILE__ == $0
   oc = OrbitControl.new
+  if ENV["LXU_LOCATION"]
+    oc.location = ENV["LXU_LOCATION"].hex 
+  end
   oc.cmd(ARGV[0],ARGV[1])
 end

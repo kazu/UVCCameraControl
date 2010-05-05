@@ -98,7 +98,19 @@ const uvc_controls_t uvc_controls = {
 			
 			UInt32 currentLocationID = 0;
 			(*deviceInterface)->GetLocationID(deviceInterface, &currentLocationID);
-			
+		 
+      UInt16 currentVendor = 0;
+			(*deviceInterface)->GetDeviceVendor(deviceInterface, &currentVendor);
+
+      UInt16 currentProduct = 0;
+			(*deviceInterface)->GetDeviceProduct(deviceInterface, &currentProduct);
+
+
+      NSLog(@"LocationID: 0x%x VendorID: 0x%x ProductID: 0x%x",
+              currentLocationID,
+              currentVendor,
+              currentProduct);
+
 			if( currentLocationID == locationID ) {
 				// Yep, this is the USB Device that was requested!
 				interface = [self getControlInferaceWithDeviceInterface:deviceInterface];
@@ -460,8 +472,8 @@ const uvc_controls_t uvc_controls = {
 // resetTiltPan support only logitech Orbit.
 
 - (BOOL)resetTiltPan:(BOOL)enabled {
-
-	return [self setData:3
+  int8_t val = 3;
+	return [self setData2:&val
 			 withLength:uvc_controls.pantilt_reset.size
 			forSelector:uvc_controls.pantilt_reset.selector 
 					 at:uvc_controls.pantilt_reset.unit];

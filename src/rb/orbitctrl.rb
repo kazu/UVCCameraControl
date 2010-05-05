@@ -10,7 +10,7 @@ class OrbitControl
     @camera_control = nil
   end
 
-  def cmd(cmd,val)
+  def cmd(cmd,val=nil)
     case cmd
     when /reset/
       reset
@@ -18,9 +18,16 @@ class OrbitControl
       pan(val.to_i)
     when /tilt/
       tilt(val.to_i)
+    when /list_devices/
+      list_devices
     end
   end
 
+  def list_devices
+    tmp =  OSX::UVCCameraControl.alloc.initWithLocationID(0)
+    tmp.release
+  end
+  
   def close 
     # @camera_control.release
     @camera_control = nil
@@ -63,7 +70,4 @@ end
 if __FILE__ == $0
   oc = OrbitControl.new
   oc.cmd(ARGV[0],ARGV[1])
-  #  oc.reset
-#  oc.pan(1)
-#  oc.tilt(1)
 end

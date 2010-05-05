@@ -26,7 +26,8 @@ class OrbitControl
   end
 
   def list_devices
-    tmp =  OSX::UVCCameraControl.alloc.initWithLocationID(0)
+    tmp =  OSX::UVCCameraControl.alloc
+    tmp.listOfUVCdevice(0)
     tmp.release
   end
   

@@ -95,8 +95,8 @@ const uvc_controls_t uvc_controls = {
 		UInt8 currentDeviceClass;
 		(*deviceInterface)->GetDeviceClass(deviceInterface, &currentDeviceClass);
 		if(currentDeviceClass != UVC_CONTROL_INTERFACE_CLASS){
-			NSLog(@"class %ud UVC %ud ",currentDeviceClass,UVC_CONTROL_INTERFACE_CLASS);
-			continue;
+			printf("class %ud UVC %ud \n",currentDeviceClass,UVC_CONTROL_INTERFACE_CLASS);
+			//continue;
 		}
 		
 		UInt32 currentLocationID = 0;
@@ -109,7 +109,7 @@ const uvc_controls_t uvc_controls = {
 		(*deviceInterface)->GetDeviceProduct(deviceInterface, &currentProduct);
 		
 		
-		printf("LocationID: 0x%x VendorID: 0x%x ProductID: 0x%x",
+		printf("LocationID: 0x%x VendorID: 0x%x ProductID: 0x%x\n",
               currentLocationID,
               currentVendor,
               currentProduct);

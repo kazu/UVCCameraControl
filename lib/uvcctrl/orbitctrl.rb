@@ -1,3 +1,4 @@
+#!/usr/bin/ruby
 require "osx/foundation"
 OSX.require_framework('IOKit')
 require "osx/cocoa"
@@ -27,7 +28,7 @@ class OrbitControl
 
   def list_devices
     tmp =  OSX::UVCCameraControl.alloc
-    p tmp.listOfUVCdevice(0)
+    tmp.listOfUVCdevice(0)
     tmp.release
   end
   
@@ -81,11 +82,29 @@ class OrbitControl
 
 end
 
+class UVCConfig
+  def UVCConfig.load(file=File.join(ENV["HOME"],".uvcconf.rb"))
+    config = eval(File.read(file))
+    self.new(config)
+  end
+
+  def initialize(config)
+    @config =config
+  end
+
+  def [](val)
+    @config[val]
+  end
+end
 
 if __FILE__ == $0
+  conf = nil
+  conf = UVCConfig.load
   oc = OrbitControl.new
-  if ENV["LXU_LOCATION"]
-    oc.location = ENV["LXU_LOCATION"].hex 
-  end
-  oc.cmd(ARGV[0],ARGV[1])
+  args = ARGV.dup
+  cmd = args.shift
+  num = args.shift.to_i
+  oc.location =  conf[:location][num] if conf &&  conf[:location][num]
+  oc.cmd(cmd, args[0])
+
 end

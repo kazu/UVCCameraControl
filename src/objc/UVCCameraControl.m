@@ -155,12 +155,12 @@ const uvc_controls_t uvc_controls = {
 			UInt16 currentProduct = 0;
 			(*deviceInterface)->GetDeviceProduct(deviceInterface, &currentProduct);
 
-
+/*
 			NSLog(@"LocationID: 0x%x VendorID: 0x%x ProductID: 0x%x",
               currentLocationID,
               currentVendor,
               currentProduct);
-
+*/
 			if( currentLocationID == locationID ) {
 				// Yep, this is the USB Device that was requested!
 				interface = [self getControlInferaceWithDeviceInterface:deviceInterface];
